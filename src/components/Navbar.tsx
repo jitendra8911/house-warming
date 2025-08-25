@@ -2,80 +2,97 @@ import React from "react";
 import {
     Drawer,
     List,
-    ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    Box,
+    useMediaQuery,
 } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import CelebrationOutlinedIcon from "@mui/icons-material/CelebrationOutlined";
-import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import { NavLink } from "react-router-dom";
+import { ThemeProvider, useTheme } from "@mui/material/styles";
+import HomeIcon from "@mui/icons-material/Home";
+import EventIcon from "@mui/icons-material/Event";
+import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
+import MapIcon from "@mui/icons-material/Map";
+import { useLocation, useNavigate } from "react-router-dom";
 import { navbarTheme } from "../theme/theme";
 import "../styles/components/navbar.scss";
-
-const navLinks = [
-    { text: "Home", path: "/", icon: <CelebrationOutlinedIcon />, end: true },
-    { text: "RSVP", path: "/rsvp", icon: <HowToRegOutlinedIcon /> },
-    { text: "Gallery", path: "/gallery", icon: <HomeOutlinedIcon /> },
-    { text: "Map", path: "/map", icon: <PlaceOutlinedIcon /> },
-];
-
-const NavList: React.FC = () => (
-    <List>
-        {navLinks.map(({ text, path, icon, end }) => (
-            <ListItem key={text} disablePadding>
-                <ListItemButton component={NavLink} to={path} end={end} className="nav-link">
-                    <ListItemIcon className="nav-icon">{icon}</ListItemIcon>
-                    <ListItemText primary={text} />
-                </ListItemButton>
-            </ListItem>
-        ))}
-    </List>
-);
-
-const DRAWER_WIDTH = 250;
 
 interface NavbarProps {
     mobileOpen: boolean;
     onMobileClose: () => void;
 }
 
+const drawerWidth = 240;
+
 const Navbar: React.FC<NavbarProps> = ({ mobileOpen, onMobileClose }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const navItems = [
+        { text: "Home", path: "/", icon: <HomeIcon />, exact: true },
+        { text: "RSVP", path: "/rsvp", icon: <EventIcon /> },
+        { text: "Gallery", path: "/gallery", icon: <PhotoLibraryIcon /> },
+        { text: "Map", path: "/map", icon: <MapIcon /> },
+    ];
+
+    const isActive = (to: string, exact?: boolean) =>
+        exact ? location.pathname === to : location.pathname.startsWith(to);
+
+    const handleNav = (to: string) => {
+        navigate(to);
+        if (isMobile) onMobileClose();
+    };
+
+    const drawerContent = (
+        <List>
+            {navItems.map(({ text, path, icon, exact }) => (
+                <ListItemButton
+                    key={text}
+                    className="nav-link"
+                    selected={isActive(path, exact)}
+                    onClick={() => handleNav(path)}
+                >
+                    <ListItemIcon className="nav-icon">{icon}</ListItemIcon>
+                    <ListItemText primary={text} />
+                </ListItemButton>
+            ))}
+        </List>
+    );
+
     return (
         <ThemeProvider theme={navbarTheme}>
-            {/* Desktop permanent Drawer */}
-            <Drawer
-                variant="permanent"
-                anchor="left"
-                open
-                className="desktop-only"
-                PaperProps={{
-                    sx: { width: DRAWER_WIDTH, bgcolor: "background.default", color: "text.primary" },
-                }}
-            >
-                <NavList />
-            </Drawer>
+            {/* Mobile: temporary drawer */}
+            {isMobile && (
+                <Drawer
+                    anchor="left"
+                    open={mobileOpen}
+                    onClose={onMobileClose}
+                    ModalProps={{ keepMounted: true }}
+                    sx={{ "& .MuiDrawer-paper": { width: drawerWidth } }}
+                >
+                    {drawerContent}
+                </Drawer>
+            )}
 
-            {/* Spacer */}
-            <div className="drawer-spacer desktop-only" />
-
-            {/* Mobile temporary Drawer */}
-            <Drawer
-                anchor="left"
-                open={mobileOpen}
-                onClose={onMobileClose}
-                PaperProps={{
-                    sx: { width: DRAWER_WIDTH, bgcolor: "background.default", color: "text.primary" },
-                }}
-            >
-                <Box sx={{ width: DRAWER_WIDTH }} onClick={onMobileClose}>
-                    <NavList />
-                </Box>
-            </Drawer>
+            {/* Desktop: permanent drawer (no spacer) */}
+            {!isMobile && (
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        width: drawerWidth,
+                        flexShrink: 0,
+                        "& .MuiDrawer-paper": {
+                            width: drawerWidth,
+                            boxSizing: "border-box",
+                        },
+                    }}
+                    className="desktop-only"
+                    open
+                >
+                    {drawerContent}
+                </Drawer>
+            )}
         </ThemeProvider>
     );
 };

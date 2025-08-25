@@ -1,12 +1,11 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Grid, Card, CardMedia } from "@mui/material";
 import "../styles/pages/gallery.scss";
 
-const IMAGES: string[] = [
-    "/progress1.jpg",
-    "/progress2.jpg",
-    "/progress3.jpg",
-    // add more as needed
+const images: string[] = [
+    "/images/house1.jpg",
+    "/images/house2.jpg",
+    "/images/house3.jpg",
 ];
 
 const Gallery: React.FC = () => {
@@ -14,14 +13,24 @@ const Gallery: React.FC = () => {
         <Box className="page-container">
             <Box className="page-content">
                 <Typography variant="h4" gutterBottom>
-                    House Progress 🏡
+                    Gallery 🏡
                 </Typography>
 
-                <div className="image-grid">
-                    {IMAGES.map((src, idx) => (
-                        <img key={idx} src={src} alt={`Progress ${idx + 1}`} />
+                <Grid container spacing={2} justifyContent="center">
+                    {images.map((src: string, i: number) => (
+                        <Grid item={true} xs={12} sm={6} md={4} key={"gallery-img-" + i}>
+                            <Card>
+                                <CardMedia
+                                    component="img"
+                                    height="220"
+                                    image={src}
+                                    alt={"House progress " + (i + 1)}
+                                    loading="lazy"
+                                />
+                            </Card>
+                        </Grid>
                     ))}
-                </div>
+                </Grid>
             </Box>
         </Box>
     );

@@ -23,10 +23,10 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
 
     const seg = `/${(location.pathname.split("/")[1] || "")}`;
     const routeTitles: Record<string, { title: string; subtitle: string }> = {
-        "/":        { title: "Welcome Home 🎉", subtitle: "Housewarming Invitation" },
-        "/rsvp":    { title: "RSVP 📝",         subtitle: "Let us know if you can make it" },
-        "/gallery": { title: "Gallery 🏡",      subtitle: "Our house journey in pictures" },
-        "/map":     { title: "Find Us 📍",      subtitle: "Directions to our new home" },
+        "/": { title: "Welcome Home 🎉", subtitle: "Housewarming Invitation" },
+        "/rsvp": { title: "RSVP 📝", subtitle: "Let us know if you can make it" },
+        "/gallery": { title: "Gallery 🏡", subtitle: "Our house journey in pictures" },
+        "/map": { title: "Find Us 📍", subtitle: "Directions to our new home" },
     };
     const { title, subtitle } = routeTitles[seg] ?? {
         title: "Housewarming Party 🎉",
@@ -37,10 +37,9 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
         <AppBar
             position="sticky"
             className="header"
-            sx={{ bgcolor: "#ffe0b2", color: "#3e2723" }}
+            sx={{ bgcolor: "#fff3e0", color: "#3e2723" }}
         >
-            {/* Make the toolbar a positioning context for the hamburger */}
-            <Toolbar className="header-toolbar" sx={{ position: "relative" }}>
+            <Toolbar className="header-toolbar">
                 {isMobile && (
                     <IconButton
                         aria-label="open navigation"
@@ -50,7 +49,6 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
                         <MenuIcon />
                     </IconButton>
                 )}
-
                 <Box className="header-logo">🏡</Box>
                 <Box className="header-text">
                     <Typography variant="h5" className="header-title">

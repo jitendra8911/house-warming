@@ -1,7 +1,14 @@
-$drawer-width: 250px;
+// Brand color palette
+$color-cream: #fff3e0;   // main background (pages, header, footer)
+$color-apricot: #ffe0b2; // navbar background
+$color-orange: #ef6c00;  // primary accent (buttons, links, hover)
+$color-orange-dark: #e65100; // darker hover orange
 
-/* theme color hooks (optional: keep in sync with MUI) */
-$primary-color: #d17a22;
-$secondary-color: #8b5e3c;
-$background-color: #fdf6f0;
-$text-primary: #3e2723;
+// Supporting colors
+$color-brown-dark: #3e2723; // text primary
+$color-brown: #5d4037;      // text secondary
+$color-brown-light: #6d4c41;
+
+// Layout
+$drawer-width: 240px;
+$border-radius: 12px;

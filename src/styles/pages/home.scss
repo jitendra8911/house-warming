@@ -1,8 +1,25 @@
-.invitation-text {
-  font-size: 1.1rem;
-  margin: 0.5rem 0 1.25rem;
+@import "../variables";
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
 }
 
-.rsvp-button {
-  margin-top: 1rem;
+.page-content {
+  text-align: center;
+
+  h4 {
+    margin-bottom: 1rem;
+    color: #3e2723;
+  }
+
+  p {
+    margin-bottom: 0.75rem;
+    color: #5d4037;
+  }
+
+  .MuiButton-root {
+    margin-top: 1rem;
+  }
 }

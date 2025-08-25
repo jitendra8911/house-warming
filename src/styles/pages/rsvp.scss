@@ -1,9 +1,33 @@
-.rsvp-form {
+@import "../variables";
+.page-container {
+  padding: 2rem;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
 }
 
-.guest-list {
-  margin-top: 2rem;
+.page-content {
+  width: 100%;
+  max-width: 700px;
+
+  h4 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #3e2723;
+  }
+
+  .rsvp-form {
+    margin-bottom: 1rem;
+
+    .MuiTextField-root {
+      margin-bottom: 1rem;
+    }
+
+    .MuiButton-root {
+      margin-right: 0.5rem;
+    }
+  }
+
+  .MuiCard-root {
+    margin-bottom: 1rem;
+  }
 }

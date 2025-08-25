@@ -1,5 +1,6 @@
+@import "../variables";
 .header {
-  background-color: #ffe0b2 !important;
+  background-color: #fff3e0 !important; // lighter cream
   color: #3e2723 !important;
 
   .header-toolbar {
@@ -7,6 +8,7 @@
     align-items: center;
     gap: 1rem;
     min-height: 70px;
+    position: relative; /* so hamburger can be absolutely placed */
   }
 
   .header-logo {
@@ -20,11 +22,21 @@
     .header-title {
       font-weight: 600;
       color: #3e2723;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #bf360c; // deep orange accent
+      }
     }
 
     .header-subtitle {
       color: #5d4037;
       font-size: 0.9rem;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #8d6e63; // warm brown
+      }
     }
   }
 }
