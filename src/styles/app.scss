@@ -1,0 +1,25 @@
+// src/styles/app.scss
+@import "./variables";
+
+.app-container {
+  display: flex;
+
+  .main-content {
+    flex-grow: 1;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    .content-inner {
+      max-width: 800px;
+      width: 100%;
+    }
+  }
+
+  &.with-drawer {
+    .main-content {
+      margin-left: $drawer-width; // from variables.scss
+    }
+  }
+}
