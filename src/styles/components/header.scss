@@ -1,0 +1,30 @@
+.header {
+  background-color: #ffe0b2 !important;
+  color: #3e2723 !important;
+
+  .header-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 70px;
+  }
+
+  .header-logo {
+    font-size: 2rem;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
+
+    .header-title {
+      font-weight: 600;
+      color: #3e2723;
+    }
+
+    .header-subtitle {
+      color: #5d4037;
+      font-size: 0.9rem;
+    }
+  }
+}

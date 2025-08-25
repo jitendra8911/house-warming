@@ -1,36 +1,40 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import RSVP from "./pages/RSVP";
-import Progress from "./pages/Progress";
-import Map from "./pages/Map";
+import Gallery from "./pages/Gallery";
+import MapPage from "./pages/Map";
 import Navbar from "./components/Navbar";
-import { useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 import "./styles/app.scss";
 
-function App() {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+const App: React.FC = () => {
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
     return (
-        <Router>
-            <div className={`app-container ${isMobile ? "" : "with-drawer"}`}>
-                <Navbar />
+        <div className="app-container">
+            {/* Desktop permanent drawer + Mobile drawer */}
+            <Navbar
+                mobileOpen={mobileNavOpen}
+                onMobileClose={() => setMobileNavOpen(false)}
+            />
 
-                <main className="main-content">
-                    <div className="content-inner">
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/rsvp" element={<RSVP />} />
-                            <Route path="/progress" element={<Progress />} />
-                            <Route path="/map" element={<Map />} />
-                        </Routes>
-                    </div>
-                </main>
+            <div className="content">
+                {/* Hamburger lives inside Header (mobile only) */}
+                <Header onHamburgerClick={() => setMobileNavOpen(true)} />
+
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/rsvp" element={<RSVP />} />
+                    <Route path="/gallery" element={<Gallery />} />
+                    <Route path="/map" element={<MapPage />} />
+                </Routes>
+
+                <Footer />
             </div>
-        </Router>
+        </div>
     );
-}
+};
 
 export default App;

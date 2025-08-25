@@ -1,74 +1,82 @@
-import { Link } from "react-router-dom";
+import React from "react";
 import {
     Drawer,
     List,
     ListItem,
+    ListItemButton,
+    ListItemIcon,
     ListItemText,
-    Typography,
     Box,
-    useMediaQuery,
-    IconButton,
-    AppBar,
-    Toolbar,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { useState } from "react";
-import { useTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
+import CelebrationOutlinedIcon from "@mui/icons-material/CelebrationOutlined";
+import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
+import { NavLink } from "react-router-dom";
+import { navbarTheme } from "../theme/theme";
+import "../styles/components/navbar.scss";
 
-import "../styles/navbar.scss";
+const navLinks = [
+    { text: "Home", path: "/", icon: <CelebrationOutlinedIcon />, end: true },
+    { text: "RSVP", path: "/rsvp", icon: <HowToRegOutlinedIcon /> },
+    { text: "Gallery", path: "/gallery", icon: <HomeOutlinedIcon /> },
+    { text: "Map", path: "/map", icon: <PlaceOutlinedIcon /> },
+];
 
-const Navbar: React.FC = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-    const [mobileOpen, setMobileOpen] = useState(false);
+const NavList: React.FC = () => (
+    <List>
+        {navLinks.map(({ text, path, icon, end }) => (
+            <ListItem key={text} disablePadding>
+                <ListItemButton component={NavLink} to={path} end={end} className="nav-link">
+                    <ListItemIcon className="nav-icon">{icon}</ListItemIcon>
+                    <ListItemText primary={text} />
+                </ListItemButton>
+            </ListItem>
+        ))}
+    </List>
+);
 
-    const handleToggle = () => setMobileOpen(!mobileOpen);
+const DRAWER_WIDTH = 250;
 
-    const drawerContent = (
-        <Box>
-            <Typography className="navbar-header">🏠 House Warming</Typography>
-            <List>
-                <ListItem button component={Link} to="/" onClick={() => setMobileOpen(false)}>
-                    <ListItemText primary="Invitation" />
-                </ListItem>
-                <ListItem button component={Link} to="/rsvp" onClick={() => setMobileOpen(false)}>
-                    <ListItemText primary="RSVP" />
-                </ListItem>
-                <ListItem button component={Link} to="/progress" onClick={() => setMobileOpen(false)}>
-                    <ListItemText primary="House Progress" />
-                </ListItem>
-                <ListItem button component={Link} to="/map" onClick={() => setMobileOpen(false)}>
-                    <ListItemText primary="Location" />
-                </ListItem>
-            </List>
-        </Box>
-    );
+interface NavbarProps {
+    mobileOpen: boolean;
+    onMobileClose: () => void;
+}
 
+const Navbar: React.FC<NavbarProps> = ({ mobileOpen, onMobileClose }) => {
     return (
-        <>
-            {isMobile ? (
-                <>
-                    <AppBar position="static">
-                        <Toolbar>
-                            <IconButton edge="start" color="inherit" onClick={handleToggle}>
-                                <MenuIcon />
-                            </IconButton>
-                            <Typography variant="h6" sx={{ ml: 2 }}>
-                                House Warming
-                            </Typography>
-                        </Toolbar>
-                    </AppBar>
+        <ThemeProvider theme={navbarTheme}>
+            {/* Desktop permanent Drawer */}
+            <Drawer
+                variant="permanent"
+                anchor="left"
+                open
+                className="desktop-only"
+                PaperProps={{
+                    sx: { width: DRAWER_WIDTH, bgcolor: "background.default", color: "text.primary" },
+                }}
+            >
+                <NavList />
+            </Drawer>
 
-                    <Drawer anchor="left" open={mobileOpen} onClose={handleToggle}>
-                        {drawerContent}
-                    </Drawer>
-                </>
-            ) : (
-                <Drawer variant="permanent" anchor="left" open className="navbar-drawer">
-                    {drawerContent}
-                </Drawer>
-            )}
-        </>
+            {/* Spacer */}
+            <div className="drawer-spacer desktop-only" />
+
+            {/* Mobile temporary Drawer */}
+            <Drawer
+                anchor="left"
+                open={mobileOpen}
+                onClose={onMobileClose}
+                PaperProps={{
+                    sx: { width: DRAWER_WIDTH, bgcolor: "background.default", color: "text.primary" },
+                }}
+            >
+                <Box sx={{ width: DRAWER_WIDTH }} onClick={onMobileClose}>
+                    <NavList />
+                </Box>
+            </Drawer>
+        </ThemeProvider>
     );
 };
 
