@@ -16,48 +16,64 @@ import "../styles/pages/rsvp.scss";
 import GoingModal from "../components/rsvp/GoingModal";
 import NoteModal from "../components/rsvp/NoteModal";
 
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
+    getDocs,
+    setDoc
+} from "firebase/firestore";
+import { db } from "../lib/firebase";
+import {useAuth} from "../auth/AuthContext.tsx";
+import {adminResetRsvps} from "../lib/functions.ts";
+
 type RSVPStatus = "going" | "not_going" | "maybe";
 
-interface RSVPEntry {
+export interface RSVPEntry {
+    id?: string;
     name: string;
     status: RSVPStatus;
     additionalGuests: number;
     note?: string;
-    createdAt: string;
+    createdAt?: any; // Firestore Timestamp (optional until written)
 }
 
-const STORAGE_KEY = "rsvps";
+const RSVPS_COL = "rsvps";
 
 const RSVP: React.FC = () => {
     const [name, setName] = useState("");
     const [guests, setGuests] = useState<RSVPEntry[]>([]);
-    const [isAdmin, setIsAdmin] = useState(false);
 
     const [openGoing, setOpenGoing] = useState(false);
     const [openOther, setOpenOther] = useState<false | RSVPStatus>(false);
 
+    const { uid, isAdmin, loading } = useAuth();
+    // 🔄 Live subscribe to RSVPs
     useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed: RSVPEntry[] = JSON.parse(saved).map((g: any) => ({
-                    ...g,
-                    additionalGuests:
-                        typeof g.additionalGuests === "string"
-                            ? parseInt(String(g.additionalGuests).replace(/[^\d]/g, ""), 10) || 0
-                            : Number(g.additionalGuests || 0),
-                    status: (g.status as RSVPStatus) ?? (g.attending ? "going" : "maybe"),
-                }));
-                setGuests(parsed);
-            } catch {}
-        }
-        setIsAdmin(localStorage.getItem("isAdmin") === "true");
-    }, []);
 
-    const saveGuests = (list: RSVPEntry[]) => {
-        setGuests(list);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    };
+        const q = query(collection(db, RSVPS_COL), orderBy("createdAt", "asc"));
+        const unsub = onSnapshot(q, (snap) => {
+            const rows: RSVPEntry[] = [];
+            snap.forEach((d) => {
+                const data = d.data() as RSVPEntry;
+                rows.push({
+                    id: d.id,
+                    name: data.name,
+                    status: data.status,
+                    additionalGuests: Number(data.additionalGuests || 0),
+                    note: data.note,
+                    createdAt: data.createdAt,
+                });
+            });
+            setGuests(rows);
+        });
+        return () => unsub();
+    }, []);
 
     const ensureName = (): string | null => {
         const trimmed = name.trim();
@@ -68,58 +84,64 @@ const RSVP: React.FC = () => {
         return trimmed;
     };
 
-    const handleGoingClick = () => {
-        if (!ensureName()) return;
-        setOpenGoing(true);
+    // Create/Update current user's RSVP (doc id == uid)
+    const upsertMyRSVP = async (payload: Partial<RSVPEntry>) => {
+        if (!uid) { alert("Auth not ready. Try again."); return; }
+        await setDoc(
+            doc(db, "rsvps", uid),
+            {
+                userId: uid,
+                name: name.trim(),
+                createdAt: serverTimestamp(), // first time
+                updatedAt: serverTimestamp(), // updated each time
+                // fields from payload
+                ...payload,
+            },
+            { merge: true }
+        );
     };
 
-    const handleOtherClick = (status: Exclude<RSVPStatus, "going">) => {
-        if (!ensureName()) return;
-        setOpenOther(status);
-    };
-
-    const handleConfirmGoing = (additionalGuests: number) => {
-        const trimmed = ensureName();
-        if (!trimmed) return;
-        const entry: RSVPEntry = {
+    // ➕ Add entries
+    const handleConfirmGoing = async (additionalGuests: number) => {
+        const trimmed = ensureName(); if (!trimmed) return;
+        await addDoc(collection(db, "rsvps"), {
             name: trimmed,
             status: "going",
             additionalGuests: Number(additionalGuests || 0),
-            createdAt: new Date().toISOString(),
-        };
-        saveGuests([...guests, entry]);
+            note: null,
+            createdAt: serverTimestamp(),
+        });
         setOpenGoing(false);
     };
 
-    const handleConfirmOther = (note?: string) => {
-        if (!openOther) return;
-        const trimmed = ensureName();
-        if (!trimmed) return;
-        const entry: RSVPEntry = {
+    const handleConfirmOther = async (note?: string) => {
+        const trimmed = ensureName(); if (!trimmed) return;
+        await addDoc(collection(db, "rsvps"), {
             name: trimmed,
-            status: openOther,
+            status: openOther === "not_going" ? "not_going" : "maybe",
             additionalGuests: 0,
-            note,
-            createdAt: new Date().toISOString(),
-        };
-        saveGuests([...guests, entry]);
+            note: note?.trim() || null,
+            createdAt: serverTimestamp(),
+        });
         setOpenOther(false);
     };
 
-    const handleReset = () => {
-        if (confirm("Are you sure you want to clear all RSVPs?")) {
-            localStorage.removeItem(STORAGE_KEY);
-            setGuests([]);
-        }
+// Admin-only reset (callable recommended; client loop shown if you already used it)
+    const handleReset = async () => {
+        if (!isAdmin) return;
+        if (!confirm("Are you sure you want to clear all RSVPs?")) return;
+        const snap = await getDocs(collection(db, "rsvps"));
+        await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "rsvps", d.id))));
     };
 
+    // Group & counts
     const grouped = useMemo(() => {
         const by: Record<RSVPStatus, RSVPEntry[]> = {
             going: [],
             not_going: [],
             maybe: [],
         };
-        for (const g of guests) by[g.status].push(g);
+        for (const g of guests) by[g.status]?.push(g);
         return by;
     }, [guests]);
 
@@ -128,6 +150,15 @@ const RSVP: React.FC = () => {
         [grouped]
     );
 
+    const handleGoingClick = () => {
+        if (!ensureName()) return;
+        setOpenGoing(true);
+    };
+    const handleOtherClick = (status: Exclude<RSVPStatus, "going">) => {
+        if (!ensureName()) return;
+        setOpenOther(status);
+    };
+
     return (
         <Box className="page-container">
             <Box className="page-content">
@@ -135,6 +166,7 @@ const RSVP: React.FC = () => {
                     RSVP 📝
                 </Typography>
 
+                {/* Name + Action buttons */}
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <TextField
@@ -144,7 +176,6 @@ const RSVP: React.FC = () => {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
-
                         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                             <Button variant="contained" color="primary" onClick={handleGoingClick}>
                                 Going
@@ -159,6 +190,7 @@ const RSVP: React.FC = () => {
                     </CardContent>
                 </Card>
 
+                {/* Going list */}
                 <Card sx={{ mb: 2 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -168,8 +200,8 @@ const RSVP: React.FC = () => {
                             <Typography color="text.secondary">No one yet.</Typography>
                         ) : (
                             <List>
-                                {grouped.going.map((g, i) => (
-                                    <ListItemButton key={`going-${i}`} divider>
+                                {grouped.going.map((g) => (
+                                    <ListItemButton key={g.id} divider>
                                         <ListItemText
                                             primary={g.name}
                                             secondary={
@@ -190,6 +222,7 @@ const RSVP: React.FC = () => {
                     </CardContent>
                 </Card>
 
+                {/* Maybe list */}
                 <Card sx={{ mb: 2 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -199,8 +232,8 @@ const RSVP: React.FC = () => {
                             <Typography color="text.secondary">No one yet.</Typography>
                         ) : (
                             <List>
-                                {grouped.maybe.map((g, i) => (
-                                    <ListItemButton key={`maybe-${i}`} divider>
+                                {grouped.maybe.map((g) => (
+                                    <ListItemButton key={g.id} divider>
                                         <ListItemText
                                             primary={g.name}
                                             secondary={g.note ? `Note: ${g.note}` : undefined}
@@ -212,6 +245,7 @@ const RSVP: React.FC = () => {
                     </CardContent>
                 </Card>
 
+                {/* Not Going list */}
                 <Card sx={{ mb: 2 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -221,8 +255,8 @@ const RSVP: React.FC = () => {
                             <Typography color="text.secondary">No one yet.</Typography>
                         ) : (
                             <List>
-                                {grouped.not_going.map((g, i) => (
-                                    <ListItemButton key={`notgoing-${i}`} divider>
+                                {grouped.not_going.map((g) => (
+                                    <ListItemButton key={g.id} divider>
                                         <ListItemText
                                             primary={g.name}
                                             secondary={g.note ? `Note: ${g.note}` : undefined}
@@ -234,6 +268,7 @@ const RSVP: React.FC = () => {
                     </CardContent>
                 </Card>
 
+                {/* Admin reset */}
                 {isAdmin && (
                     <>
                         <Divider sx={{ my: 2 }} />
@@ -243,12 +278,12 @@ const RSVP: React.FC = () => {
                     </>
                 )}
 
+                {/* Modals */}
                 <GoingModal
                     open={openGoing}
                     onClose={() => setOpenGoing(false)}
                     onConfirm={handleConfirmGoing}
                 />
-
                 <NoteModal
                     open={!!openOther}
                     onClose={() => setOpenOther(false)}

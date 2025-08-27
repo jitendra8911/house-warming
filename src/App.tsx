@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState} from "react";
+import {Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import RSVP from "./pages/RSVP";
 import Gallery from "./pages/Gallery";

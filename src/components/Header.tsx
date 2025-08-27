@@ -5,12 +5,13 @@ import {
     Typography,
     Box,
     IconButton,
-    useMediaQuery,
+    useMediaQuery, Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useTheme } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import "../styles/components/header.scss";
+import AdminControls from "./AdminControls.tsx";
 
 interface HeaderProps {
     onHamburgerClick?: () => void;
@@ -58,6 +59,9 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
                         {subtitle}
                     </Typography>
                 </Box>
+                {/* 👇 This pushes AdminControls to the far right */}
+                <Box sx={{ flexGrow: 1 }} />
+                <AdminControls />
             </Toolbar>
         </AppBar>
     );
