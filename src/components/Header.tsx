@@ -58,7 +58,14 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
                             onClick={onHamburgerClick}
                             className="mobile-hamburger"
                             edge="start"
-                            sx={{ mr: 1 }}
+                            sx={{
+                                mr: 1,
+                                color: "#ffffff",               // force white
+                                bgcolor: "primary.main",        // background circle in theme color
+                                "&:hover": {
+                                    bgcolor: "primary.dark",
+                                },
+                            }}
                         >
                             <MenuIcon />
                         </IconButton>
