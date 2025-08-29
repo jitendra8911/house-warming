@@ -33,7 +33,7 @@
   /* Hamburger inside header at top-left */
   .mobile-hamburger {
     position: absolute;   /* relative to Toolbar inside Header */
-    top: 50%;
+    //top: 50%;
     left: 8px;
     //transform: translateY(-50%);
     z-index: 1200;        /* above header background */

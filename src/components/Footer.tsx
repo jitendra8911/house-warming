@@ -19,9 +19,6 @@ const Footer: React.FC = () => {
                     <Typography variant="body2" className="footer-text">
                         Thank you for being part of our special day ❤️
                     </Typography>
-                    <Typography variant="caption" className="footer-subtext">
-                        Contact us at: jitendra8911@gmail.com
-                    </Typography>
                 </CardContent>
 
             </Card>
