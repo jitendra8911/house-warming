@@ -160,13 +160,14 @@ const RSVP: React.FC = () => {
     return (
         <Box className="page-container">
             <Box className="page-content">
-                <Typography variant="h4" gutterBottom>
-                    RSVP 📝
-                </Typography>
+
 
                 {/* Name + Action buttons */}
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
+                        <Typography variant="h4" gutterBottom>
+                            RSVP 📝
+                        </Typography>
                         <TextField
                             label="Your Name"
                             fullWidth
