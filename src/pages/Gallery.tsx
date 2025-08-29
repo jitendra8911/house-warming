@@ -16,16 +16,15 @@ const Gallery: React.FC = () => {
                     Gallery 🏡
                 </Typography>
 
-                <Grid container spacing={2} justifyContent="center">
-                    {images.map((src: string, i: number) => (
-                        <Grid item={true} xs={12} sm={6} md={4} key={"gallery-img-" + i}>
-                            <Card>
+                <Grid container spacing={2}>
+                    {images.map((src, i) => (
+                        <Grid  key={`gallery-img-${i}`} component="div">
+                            <Card sx={{ height: "100%" }}>
                                 <CardMedia
                                     component="img"
-                                    height="220"
                                     image={src}
-                                    alt={"House progress " + (i + 1)}
-                                    loading="lazy"
+                                    alt={`House progress ${i + 1}`}
+                                    sx={{ height: 240, objectFit: "cover" }}
                                 />
                             </Card>
                         </Grid>

@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 import React from "react";
 import {
     AppBar,
@@ -5,13 +6,12 @@ import {
     Typography,
     Box,
     IconButton,
-    useMediaQuery, Button,
+    useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useTheme } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import "../styles/components/header.scss";
-import AdminControls from "./AdminControls.tsx";
 
 interface HeaderProps {
     onHamburgerClick?: () => void;
@@ -34,34 +34,67 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
         subtitle: "September 15th, 2025 • Our New Home",
     };
 
+    // Event details shown centered
+    const EVENT_TITLE = "Housewarming Ceremony";
+    const EVENT_DATETIME = "Saturday, Sept 27, 2025 · 08:50 AM";
+    const EVENT_ADDRESS = "2936 Red Rose Road, Aurora, IL, 60503";
+
     return (
-        <AppBar
-            position="sticky"
-            className="header"
-            sx={{ bgcolor: "#fff3e0", color: "#3e2723" }}
-        >
-            <Toolbar className="header-toolbar">
-                {isMobile && (
-                    <IconButton
-                        aria-label="open navigation"
-                        onClick={onHamburgerClick}
-                        className="mobile-hamburger"
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                )}
-                <Box className="header-logo">🏡</Box>
-                <Box className="header-text">
-                    <Typography variant="h5" className="header-title">
-                        {title}
+        <AppBar position="sticky" className="header">
+            <Toolbar
+                className="header-toolbar"
+                sx={{
+                    display: "grid",
+                    gridTemplateColumns: "auto 1fr", // left | center
+                    alignItems: "center",
+                    gap: 1,
+                }}
+            >
+                {/* LEFT */}
+                <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+                    {isMobile && (
+                        <IconButton
+                            aria-label="open navigation"
+                            onClick={onHamburgerClick}
+                            className="mobile-hamburger"
+                            edge="start"
+                            sx={{ mr: 1 }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                    )}
+
+                    {!isMobile && (
+                        <>
+                            <Box className="header-logo" sx={{ mr: 1 }}>🏡</Box>
+                            <Box className="header-text" sx={{ minWidth: 0 }}>
+                                <Typography variant="h6" noWrap>{title}</Typography>
+                                <Typography variant="body2" noWrap sx={{ opacity: 0.9 }}>
+                                    {subtitle}
+                                </Typography>
+                            </Box>
+                        </>
+                    )}
+
+
+                </Box>
+
+                {/* CENTER */}
+                <Box sx={{ textAlign: "center", px: 2 }}>
+                    <Typography variant="subtitle1" sx={{
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        fontSize: { xs: "0.95rem", sm: "1rem", md: "1.05rem" },
+                    }}>
+                        {EVENT_TITLE}
                     </Typography>
-                    <Typography variant="body2" className="header-subtitle">
-                        {subtitle}
+                    <Typography variant="caption" display="block">
+                        📅 {EVENT_DATETIME}
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                        📍 {EVENT_ADDRESS}
                     </Typography>
                 </Box>
-                {/* 👇 This pushes AdminControls to the far right */}
-                <Box sx={{ flexGrow: 1 }} />
-                <AdminControls />
             </Toolbar>
         </AppBar>
     );

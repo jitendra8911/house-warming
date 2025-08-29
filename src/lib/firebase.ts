@@ -11,7 +11,6 @@ import {
     getRedirectResult,
     onAuthStateChanged,
     signOut,
-    signInWithPopup,
     type User,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";

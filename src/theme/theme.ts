@@ -1,169 +1,142 @@
+// src/theme/theme.ts
 import { createTheme } from "@mui/material/styles";
+import { alpha } from "@mui/material";
 
-/** Main app theme (header, footer, pages) — background is cream */
-export const mainTheme = createTheme({
+const bgApp = "#fafbfc";
+const gh = {
+    paper: "#ffffff",
+    border: "#d0d7de",
+    text: "#24292f",
+    subtleText: "#57606a",
+    primary: "#2da44e",
+    primaryHover: "#2c974b",
+    primaryPressed: "#298e46",
+    link: "#0969da",
+    linkHover: "#0757b3",
+    danger: "#cf222e",
+    warning: "#9a6700",
+    success: "#1a7f37",
+    headerBg: "#fafbfc",
+    headerFg: "#ffffff",
+    sidebarBg: "#f6f8fa",
+    focus: "#0969da33",
+};
+
+const theme = createTheme({
+    cssVariables: true,
     palette: {
-        primary: {
-            main: "#ef6c00",            // 🔶 Primary accent for buttons/links
-            contrastText: "#ffffff",
-        },
-        secondary: {
-            main: "#6d4c41",            // warm brown for outlined/text buttons
-            contrastText: "#ffffff",
-        },
-        background: {
-            default: "#fff3e0",         // page background
-            paper: "#ffffff",
-        },
-        text: {
-            primary: "#3e2723",
-            secondary: "#5d4037",
-        },
+        mode: "light",
+        primary: { main: gh.primary, dark: gh.primaryHover, light: alpha(gh.primary, 0.25), contrastText: "#fff" },
+        secondary: { main: gh.link, dark: gh.linkHover, light: alpha(gh.link, 0.25), contrastText: "#fff" },
+        error: { main: gh.danger },
+        warning: { main: gh.warning },
+        success: { main: gh.success },
+        text: { primary: gh.text, secondary: gh.subtleText },
+        divider: gh.border,
+        background: { default: bgApp, paper: gh.paper },
     },
-    typography: {
-        fontFamily: "'Poppins', 'Roboto', sans-serif",
-        button: { fontWeight: 600 },
-    },
-    shape: { borderRadius: 12 },
     components: {
+        // 👇 Paint the global page background WITH the image (no SCSS needed)
+        MuiCssBaseline: {
+            styleOverrides: {
+                html: { backgroundColor: bgApp },
+                body: {
+                    backgroundColor: bgApp,
+                    backgroundImage: 'url("/images/confetti-background.png")', // served from /public
+                    backgroundRepeat: "repeat",                // or "no-repeat"
+                    backgroundSize: "420px 420px",             // tweak tile size
+                    backgroundAttachment: "fixed",             // elegant scrolling
+                },
+                "#root": { minHeight: "100vh" },
+            },
+        },
+
+        // Keep header & nav solid so text stays readable over confetti
+        MuiAppBar: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: gh.headerBg,
+                    color: gh.headerFg,
+                    boxShadow: "none",
+                    borderBottom: `1px solid ${alpha("#000", 0.24)}`,
+                },
+            },
+            defaultProps: { color: "default", position: "sticky" },
+        },
+        MuiDrawer: {
+            styleOverrides: {
+                paper: {
+                    backgroundColor: gh.sidebarBg,
+                    borderRight: `1px solid ${gh.border}`,
+                    backgroundImage: "none", // ensure no confetti inside drawer
+                },
+            },
+        },
+
+        // Surfaces use white “paper” with subtle borders (GitHub-like)
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    backgroundImage: "none",
+                    border: `1px solid ${gh.border}`,
+                    boxShadow: "none",
+                },
+            },
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    backgroundImage: "none",
+                    border: `1px solid ${gh.border}`,
+                    boxShadow: "none",
+                },
+            },
+        },
+
+        // Buttons, inputs, links (unchanged styling; shown for completeness)
+        // MuiButton: {
+        //     styleOverrides: {
+        //         containedPrimary: {
+        //             backgroundColor: gh.primary,
+        //             "&:hover": { backgroundColor: gh.primaryHover },
+        //             "&:active": { backgroundColor: gh.primaryPressed },
+        //             boxShadow: "none",
+        //             borderRadius: "5px"
+        //         },
+        //         outlined: { borderColor: gh.border, "&:hover": { backgroundColor: alpha("#000", 0.03) } },
+        //         text: { "&:hover": { backgroundColor: alpha("#000", 0.04) } },
+        //     },
+        // },
         MuiButton: {
             styleOverrides: {
                 root: {
+                    borderRadius: "999px", // fully rounded
+                    padding: "6px 20px",
+                    fontWeight: 600,
+                    boxShadow: "0px 3px 6px rgba(0,0,0,0.2)",
                     textTransform: "none",
-                    borderRadius: 20,
-                    padding: "8px 18px",
                 },
                 containedPrimary: {
-                    boxShadow: "0 3px 6px rgba(239,108,0,0.24)",
-                    ":hover": {
-                        backgroundColor: "#e65100",
-                        boxShadow: "0 4px 10px rgba(239,108,0,0.3)",
-                    },
-                },
-                outlinedSecondary: {
-                    borderColor: "rgba(109,76,65,0.5)",
-                    color: "#6d4c41",
-                    ":hover": {
-                        borderColor: "#6d4c41",
-                        backgroundColor: "rgba(109,76,65,0.08)",
-                    },
-                },
-                textSecondary: {
-                    color: "#6d4c41",
-                    ":hover": { backgroundColor: "rgba(109,76,65,0.08)" },
+                    backgroundColor: "#2da44e",
+                    "&:hover": { backgroundColor: "#2c974b" },
                 },
             },
+            defaultProps: {
+                disableElevation: true, // like Fabs
+            },
         },
-        MuiLink: {
+        MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    color: "#ef6c00",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                    transition: "color 0.2s ease",
-                    "&:hover": {
-                        color: "#e65100",
-                        textDecoration: "underline",
-                    },
-                },
-            },
-        },
-        MuiIconButton: {
-            styleOverrides: {
-                root: {
-                    color: "#6d4c41",
-                    transition: "background-color 0.2s ease, color 0.2s ease",
-                    "&:hover": {
-                        color: "#ef6c00",
-                        backgroundColor: "rgba(239,108,0,0.08)",
-                    },
-                },
-            },
-        },
-        MuiListItemButton: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 10,
-                    transition: "background-color 0.2s ease, color 0.2s ease",
-                    "&:hover": { backgroundColor: "rgba(239,108,0,0.08)" },
-                    "&.Mui-selected": {
-                        backgroundColor: "rgba(239,108,0,0.18)",
-                        "&:hover": { backgroundColor: "rgba(239,108,0,0.22)" },
-                    },
-                },
-            },
-        },
-        MuiListItemIcon: {
-            styleOverrides: {
-                root: {
-                    color: "#6d4c41",
-                    minWidth: 36,
-                },
-            },
-        },
-        MuiListItemText: {
-            styleOverrides: {
-                primary: {
-                    color: "#3e2723",
-                    fontWeight: 500,
-                },
-                secondary: {
-                    color: "#5d4037",
+                    backgroundColor: "#fff",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: gh.border },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: gh.text },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: gh.link },
+                    "&.Mui-focused": { boxShadow: `0 0 0 3px ${gh.focus}` },
                 },
             },
         },
     },
 });
 
-/** Navbar theme (apricot) */
-export const navbarTheme = createTheme({
-    palette: {
-        background: {
-            default: "#ffe0b2",
-            paper: "#ffe0b2",
-        },
-        text: {
-            primary: "#3e2723",
-            secondary: "#6d4c41",
-        },
-    },
-    typography: {
-        fontFamily: "'Poppins', 'Roboto', sans-serif",
-    },
-    components: {
-        MuiListItemButton: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 10,
-                    transition: "background-color 0.2s ease, color 0.2s ease",
-                    "&:hover": {
-                        backgroundColor: "rgba(93,64,55,0.15)",
-                    },
-                    "&.Mui-selected": {
-                        backgroundColor: "rgba(93,64,55,0.25)",
-                        "&:hover": { backgroundColor: "rgba(93,64,55,0.28)" },
-                    },
-                },
-            },
-        },
-        MuiListItemIcon: {
-            styleOverrides: {
-                root: {
-                    color: "#6d4c41",
-                    minWidth: 36,
-                },
-            },
-        },
-        MuiListItemText: {
-            styleOverrides: {
-                primary: {
-                    color: "#3e2723",
-                    fontWeight: 500,
-                },
-                secondary: {
-                    color: "#5d4037",
-                },
-            },
-        },
-    },
-});
+export default theme;

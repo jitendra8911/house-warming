@@ -8,7 +8,7 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background-color: #fff3e0; // main app background (switched)
+  //background-color: #fff3e0; // main app background (switched)
 }
 
 .page-container {
@@ -35,7 +35,7 @@
     position: absolute;   /* relative to Toolbar inside Header */
     top: 50%;
     left: 8px;
-    transform: translateY(-50%);
+    //transform: translateY(-50%);
     z-index: 1200;        /* above header background */
     background: #ffe0b2;  /* match navbar (apricot) */
     border-radius: 50%;   /* circular background */

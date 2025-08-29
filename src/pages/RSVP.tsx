@@ -26,11 +26,9 @@ import {
     query,
     serverTimestamp,
     getDocs,
-    setDoc
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import {useAuth} from "../auth/AuthContext.tsx";
-import {adminResetRsvps} from "../lib/functions.ts";
 
 type RSVPStatus = "going" | "not_going" | "maybe";
 
@@ -52,7 +50,7 @@ const RSVP: React.FC = () => {
     const [openGoing, setOpenGoing] = useState(false);
     const [openOther, setOpenOther] = useState<false | RSVPStatus>(false);
 
-    const { uid, isAdmin, loading } = useAuth();
+    const {  isAdmin } = useAuth();
     // 🔄 Live subscribe to RSVPs
     useEffect(() => {
 
@@ -85,21 +83,21 @@ const RSVP: React.FC = () => {
     };
 
     // Create/Update current user's RSVP (doc id == uid)
-    const upsertMyRSVP = async (payload: Partial<RSVPEntry>) => {
-        if (!uid) { alert("Auth not ready. Try again."); return; }
-        await setDoc(
-            doc(db, "rsvps", uid),
-            {
-                userId: uid,
-                name: name.trim(),
-                createdAt: serverTimestamp(), // first time
-                updatedAt: serverTimestamp(), // updated each time
-                // fields from payload
-                ...payload,
-            },
-            { merge: true }
-        );
-    };
+    // const upsertMyRSVP = async (payload: Partial<RSVPEntry>) => {
+    //     if (!uid) { alert("Auth not ready. Try again."); return; }
+    //     await setDoc(
+    //         doc(db, "rsvps", uid),
+    //         {
+    //             userId: uid,
+    //             name: name.trim(),
+    //             createdAt: serverTimestamp(), // first time
+    //             updatedAt: serverTimestamp(), // updated each time
+    //             // fields from payload
+    //             ...payload,
+    //         },
+    //         { merge: true }
+    //     );
+    // };
 
     // ➕ Add entries
     const handleConfirmGoing = async (additionalGuests: number) => {

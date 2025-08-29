@@ -13,7 +13,7 @@ import EventIcon from "@mui/icons-material/Event";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import MapIcon from "@mui/icons-material/Map";
 import { useLocation, useNavigate } from "react-router-dom";
-import { navbarTheme } from "../theme/theme";
+import navbarTheme  from "../theme/theme";
 import "../styles/components/navbar.scss";
 
 interface NavbarProps {
