@@ -1,43 +1,88 @@
-import React, { useMemo, useState } from "react";
-import { Box, Typography, Grid, Card, CardMedia, CardContent, Dialog, useMediaQuery } from "@mui/material";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import {
+    Box,
+    Typography,
+    Grid,
+    Card,
+    CardMedia,
+    CardContent,
+    Dialog,
+    IconButton,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import "../styles/pages/gallery.scss";
 
-type Item = { thumb: string; full?: string; alt: string };
+type Photo = { alt: string; name: string; thumb: string; full?: string };
 
 const Gallery: React.FC = () => {
-    // Keep the module keys so we can match by original filename
-    const thumbs = import.meta.glob("/src/assets/images/gallery/thumbnails/*.{png,jpg,jpeg,webp,avif}", {
-        eager: true,
-        import: "default",
-    }) as Record<string, string>;
+    // Import thumbnails & full-res
+    const thumbsObj = import.meta.glob(
+        "/src/assets/images/gallery/thumbnails/*.{png,jpg,jpeg,webp,avif}",
+        { eager: true, import: "default" }
+    );
+    const fullObj = import.meta.glob(
+        "/src/assets/images/gallery/full-res/*.{png,jpg,jpeg,webp,avif}",
+        { eager: true, import: "default" }
+    );
 
-    const fulls = import.meta.glob("/src/assets/images/gallery/full-res/*.{png,jpg,jpeg,webp,avif}", {
-        eager: true,
-        import: "default",
-    }) as Record<string, string>;
-
-    // Build a map: "IMG_1234.jpg" -> full URL
-    const fullByBase = useMemo(() => {
+    // Build a name -> full URL map
+    const fullMap = useMemo(() => {
         const m: Record<string, string> = {};
-        Object.entries(fulls).forEach(([key, url]) => {
-            const base = key.split("/").pop(); // original filename in src/
-            if (base) m[base] = url;
+        Object.values(fullObj).forEach((u: unknown) => {
+            const url = String(u);
+            const name = url.split("/").pop()!;
+            m[name] = url;
         });
         return m;
-    }, [fulls]);
+    }, [fullObj]);
 
-    // Create items by pairing thumb with its full using the original basename
-    const items: Item[] = useMemo(() => {
-        return Object.entries(thumbs).map(([key, thumbUrl], i) => {
-            const base = key.split("/").pop();
-            const fullUrl = base ? fullByBase[base] : undefined;
-            return { thumb: thumbUrl, full: fullUrl, alt: `House progress ${i + 1}` };
+    // Build sorted photos array from thumbnails
+    const photos = useMemo<Photo[]>(() => {
+        const list = Object.values(thumbsObj).map((u: unknown) => {
+            const url = String(u);
+            const name = url.split("/").pop()!;
+            return {
+                name,
+                thumb: url,
+                full: fullMap[name], // may be undefined if not present
+                alt: name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
+            };
         });
-    }, [thumbs, fullByBase]);
+        // Sort by filename so order is stable
+        return list.sort((a, b) => a.name.localeCompare(b.name));
+    }, [thumbsObj, fullMap]);
 
-    const [open, setOpen] = useState(false);
-    const [active, setActive] = useState<Item | null>(null);
-    const fullScreen = useMediaQuery("(max-width:600px)");
+    // Viewer state = index of current photo (null = closed)
+    const [index, setIndex] = useState<number | null>(null);
+    const open = index !== null;
+    const current = open && index! >= 0 ? photos[index!] : null;
+
+    const handleOpen = useCallback((i: number) => setIndex(i), []);
+    const handleClose = useCallback(() => setIndex(null), []);
+
+    const handlePrev = useCallback(() => {
+        if (!photos.length || index === null) return;
+        setIndex((prev) => (prev! - 1 + photos.length) % photos.length);
+    }, [photos.length, index]);
+
+    const handleNext = useCallback(() => {
+        if (!photos.length || index === null) return;
+        setIndex((prev) => (prev! + 1) % photos.length);
+    }, [photos.length, index]);
+
+    // Arrow keys for navigation & Esc to close
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "ArrowLeft") handlePrev();
+            if (e.key === "ArrowRight") handleNext();
+            if (e.key === "Escape") handleClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, handlePrev, handleNext, handleClose]);
 
     return (
         <Box className="page-container page-gallery">
@@ -45,6 +90,7 @@ const Gallery: React.FC = () => {
                 <Card
                     sx={{
                         width: "100%",
+                        margin: "0 auto",
                         borderRadius: 3,
                         boxShadow: "none",
                         border: "none",
@@ -55,25 +101,19 @@ const Gallery: React.FC = () => {
                         <Typography variant="h4" gutterBottom>
                             Gallery 🏡
                         </Typography>
-
                         <Grid container spacing={2}>
-                            {items.map((it, i) => (
-                                <Grid  key={`gallery-img-${i}`}>
+                            {photos.map((p, i) => (
+                                <Grid component="div">
                                     <Card
-                                        sx={{ height: "100%", cursor: it.full ? "zoom-in" : "default" }}
-                                        onClick={() => {
-                                            if (!it.full) return; // no full match found
-                                            setActive(it);
-                                            setOpen(true);
-                                        }}
+                                        sx={{ height: "100%", cursor: "zoom-in" }}
+                                        onClick={() => handleOpen(i)}
                                     >
                                         <CardMedia
                                             component="img"
-                                            image={it.thumb}
-                                            alt={it.alt}
-                                            sx={{ height: 240, objectFit: "cover" }}
+                                            image={p.thumb}
+                                            alt={p.alt}
                                             loading="lazy"
-                                            decoding="async"
+                                            sx={{ height: 240, objectFit: "cover" }}
                                         />
                                     </Card>
                                 </Grid>
@@ -82,23 +122,113 @@ const Gallery: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                {/* Single dialog outside the map */}
+                {/* SINGLE dialog, outside the map */}
                 <Dialog
                     open={open}
-                    onClose={() => setOpen(false)}
+                    onClose={handleClose}
                     maxWidth="lg"
-                    fullWidth
-                    fullScreen={fullScreen}
-                    keepMounted
+
+                    PaperProps={{
+                        sx: {
+                            backgroundColor: "rgba(255,255,255,0.95)",
+                            backgroundImage: "none",
+                            boxShadow: 6,
+                            position: "relative",
+                        },
+                    }}
+                    BackdropProps={{
+                        sx: {
+                            // 🎉 Confetti backdrop (uses the same file you set in theme/public)
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            // backgroundImage: 'url("/background.png")',
+                            backgroundRepeat: "repeat",
+                            backgroundSize: "420px 420px",
+                            backdropFilter: "none",
+                        },
+                    }}
                 >
-                    {active?.full && (
-                        <Box sx={{ p: 0 }}>
+                    {/* Close button (top-right) */}
+                    <IconButton
+                        aria-label="Close"
+                        onClick={handleClose}
+                        color="primary"
+                        sx={{
+                            position: "absolute",
+                            top: 16,
+                            right: 16,
+                            zIndex: 2,
+                            bgcolor: "primary.main",              // solid background
+                            color: "#fff",                        // white icon for contrast
+                            "&:hover": { bgcolor: "primary.dark" },
+                            boxShadow: 3,                         // raised like a floating button
+                            width: { xs: 30, sm: 56 },   // 👈 smaller on mobile
+                            height: { xs: 30, sm: 56 },
+                        }}
+                    >
+                        <CloseIcon sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }} />
+                    </IconButton>
+
+                    {/* Prev button (left center) */}
+                    {open && photos.length > 1 && (
+                        <IconButton
+                            aria-label="Previous"
+                            onClick={handlePrev}
+                            color="primary"
+                            sx={{
+                                position: "absolute",
+                                left: 16,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                zIndex: 2,
+                                bgcolor: "primary.main",
+                                color: "#fff",
+                                "&:hover": { bgcolor: "primary.dark" },
+                                boxShadow: 3,
+                                width: { xs: 30, sm: 56 },   // 👈 smaller on mobile
+                                height: { xs: 30, sm: 56 },
+                            }}
+                        >
+                            <ChevronLeftIcon sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}/>
+                        </IconButton>
+                    )}
+
+                    {/* Next button (right center) */}
+                    {open && photos.length > 1 && (
+                        <IconButton
+                            aria-label="Next"
+                            onClick={handleNext}
+                            color="primary"
+                            sx={{
+                                position: "absolute",
+                                right: 16,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                zIndex: 2,
+                                bgcolor: "primary.main",
+                                color: "#fff",
+                                "&:hover": { bgcolor: "primary.dark" },
+                                boxShadow: 3,
+                                width: { xs: 30, sm: 56 },   // 👈 smaller on mobile
+                                height: { xs: 30, sm: 56 },
+                            }}
+                        >
+                            <ChevronRightIcon sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}/>
+                        </IconButton>
+                    )}
+
+                    {/* Image content */}
+                    {current && (
+                        <Box sx={{ p: 0, maxWidth: "90vw", maxHeight: "85vh" }}>
                             <img
-                                src={active.full}
-                                alt={active.alt}
-                                style={{ width: "100%", height: "auto", display: "block" }}
+                                src={current.full || current.thumb}
+                                alt={current.alt}
+                                style={{
+                                    maxWidth: "100%",
+                                    maxHeight: "85vh",
+                                    display: "block",
+                                    objectFit: "contain",
+                                }}
                                 loading="eager"
-                                decoding="async"
                             />
                         </Box>
                     )}
