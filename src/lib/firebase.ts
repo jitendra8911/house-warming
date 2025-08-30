@@ -68,8 +68,9 @@ export async function adminLoginWithGooglePopup() {
         console.log("[AUTH] start popup");
         const res = await signInWithPopup(auth, provider);
         console.log("[AUTH] popup user:", res.user?.uid, res.user?.email);
-    } catch (e: any) {
-        console.warn("[AUTH] popup error:", e?.code, e?.message);
+    } catch (e) {
+        console.error("Login failed", e);
+        alert("Login failed. Please try again.");
     }
 }
 

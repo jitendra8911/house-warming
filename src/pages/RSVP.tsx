@@ -50,7 +50,7 @@ const RSVP: React.FC = () => {
     const [openGoing, setOpenGoing] = useState(false);
     const [openOther, setOpenOther] = useState<false | RSVPStatus>(false);
 
-    const {  isAdmin } = useAuth();
+    const {  user } = useAuth();
     // 🔄 Live subscribe to RSVPs
     useEffect(() => {
 
@@ -126,7 +126,7 @@ const RSVP: React.FC = () => {
 
 // Admin-only reset (callable recommended; client loop shown if you already used it)
     const handleReset = async () => {
-        if (!isAdmin) return;
+        if (!user) return;
         if (!confirm("Are you sure you want to clear all RSVPs?")) return;
         const snap = await getDocs(collection(db, "rsvps"));
         await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "rsvps", d.id))));
@@ -268,7 +268,7 @@ const RSVP: React.FC = () => {
                 </Card>
 
                 {/* Admin reset */}
-                {isAdmin && (
+                {user && (
                     <>
                         <Divider sx={{ my: 2 }} />
                         <Button variant="contained" color="error" onClick={handleReset}>

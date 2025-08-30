@@ -8,13 +8,13 @@ import {
     useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {adminLoginWithGooglePopup, adminLoginWithGoogleRedirect, logout} from "../lib/firebase";
+import {adminLoginWithGooglePopup, logout} from "../lib/firebase";
 import { useAuth } from "../auth/AuthContext";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 const AdminControls: React.FC = () => {
-    const { isAdmin, loading } = useAuth();
+    const { user, loading } = useAuth();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // xs & sm → use icons
 
@@ -47,7 +47,7 @@ const AdminControls: React.FC = () => {
             }}
         >
             <Stack direction="row" spacing={1} alignItems="center">
-                {isAdmin ? (
+                {user ? (
                     isMobile ? (
                         <IconButton
                             color="primary"
@@ -92,7 +92,7 @@ const AdminControls: React.FC = () => {
                         size="small"
                         variant="contained"
                         color="primary"
-                        onClick={() => adminLoginWithGoogleRedirect()}
+                        onClick={() => adminLoginWithGooglePopup()}
                     >
                         Admin sign in
                     </Button>
