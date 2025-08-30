@@ -10,6 +10,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import "../styles/pages/home.scss";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import invitation from "../assets/images/Invitation.jpg";
 
 const Home: React.FC = () => {
     return (
@@ -47,7 +48,7 @@ const Home: React.FC = () => {
                         </Typography>
 
                         <img
-                            src="/images/Invitation.jpg"
+                            src={invitation}
                             alt="Housewarming"
                             className="home-image"
                             style={{

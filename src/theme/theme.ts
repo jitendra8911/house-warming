@@ -1,6 +1,7 @@
 // src/theme/theme.ts
 import { createTheme } from "@mui/material/styles";
 import { alpha } from "@mui/material";
+import confettiBg from "../assets/images/confetti-background.png";
 
 const bgApp = "#fafbfc";
 const gh = {
@@ -42,7 +43,7 @@ const theme = createTheme({
                 html: { backgroundColor: bgApp },
                 body: {
                     backgroundColor: bgApp,
-                    backgroundImage: 'url("/images/confetti-background.png")', // served from /public
+                    backgroundImage: `url(${confettiBg})`, // served from /public
                     backgroundRepeat: "repeat",                // or "no-repeat"
                     backgroundSize: "420px 420px",             // tweak tile size
                     backgroundAttachment: "fixed",             // elegant scrolling
