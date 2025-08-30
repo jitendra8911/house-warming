@@ -11,6 +11,7 @@ import {
     getRedirectResult,
     onAuthStateChanged,
     signOut,
+    signInWithPopup,
     type User,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -60,6 +61,16 @@ const provider = new GoogleAuthProvider();
 export function adminLoginWithGoogleRedirect() {
     console.log("[AUTH] start redirect");
     return signInWithRedirect(auth, provider);
+}
+
+export async function adminLoginWithGooglePopup() {
+    try {
+        console.log("[AUTH] start popup");
+        const res = await signInWithPopup(auth, provider);
+        console.log("[AUTH] popup user:", res.user?.uid, res.user?.email);
+    } catch (e: any) {
+        console.warn("[AUTH] popup error:", e?.code, e?.message);
+    }
 }
 
 // ✅ process redirect FIRST, then wait for first auth event

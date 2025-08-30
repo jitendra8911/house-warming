@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import "./styles/app.scss";
+import AdminControls from "./components/AdminControls.tsx";
 
 const App: React.FC = () => {
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -23,7 +24,7 @@ const App: React.FC = () => {
             <div className="content">
                 {/* Hamburger lives inside Header (mobile only) */}
                 <Header onHamburgerClick={() => setMobileNavOpen(true)} />
-
+                <AdminControls />
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/rsvp" element={<RSVP />} />
