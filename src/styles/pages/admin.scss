@@ -1,0 +1,7 @@
+.page-admin .page-container {
+  align-items: flex-start;     /* top, not vertical center */
+  justify-content: flex-start; /* left, not horizontal center */
+  text-align: left;
+  flex-direction: column;
+  width: 100%;
+}

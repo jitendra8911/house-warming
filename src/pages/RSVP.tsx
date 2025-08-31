@@ -1,34 +1,42 @@
+// src/pages/RSVP.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Box,
-    Button,
     Card,
     CardContent,
     Typography,
+    TextField,
+    Button,
+    MenuItem,
+    Stack,
     List,
     ListItemButton,
     ListItemText,
-    Stack,
-    Divider,
-    TextField,
+    Snackbar,
+    Alert,
+    IconButton,
+    InputAdornment,
 } from "@mui/material";
-import "../styles/pages/rsvp.scss";
-import GoingModal from "../components/rsvp/GoingModal";
-import NoteModal from "../components/rsvp/NoteModal";
-
-import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
-    getDocs,
-} from "firebase/firestore";
+import ClearIcon from "@mui/icons-material/Clear";
+import { useForm, Controller, type SubmitHandler } from "react-hook-form";
+import { saveRsvp } from "../lib/firebase-rsvp";
+import type { Rsvp, RsvpStatus } from "../types/rsvp";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import {useAuth} from "../auth/AuthContext.tsx";
+
+const additionalGuestOptions = Array.from({ length: 10 }, (_, i) => i + 1);
+
+type FormValues = {
+    name: string;
+    email?: string;
+    phone?: string;
+    status: RsvpStatus;
+    additionalGuests?: number;
+    arrivalAirport?: string;
+    arrivalDate?: string;
+    arrivalTime?: string;
+    note?: string;
+};
 
 type RSVPStatus = "going" | "not_going" | "maybe";
 
@@ -41,19 +49,29 @@ export interface RSVPEntry {
     createdAt?: any; // Firestore Timestamp (optional until written)
 }
 
-const RSVPS_COL = "rsvps";
-
 const RSVP: React.FC = () => {
-    const [name, setName] = useState("");
+    const { handleSubmit, control, watch, reset, setValue } = useForm<FormValues>({
+        defaultValues: {
+            name: "",
+            email: "",
+            phone: "",
+            status: "going",
+            additionalGuests: 0,
+            arrivalAirport: "",
+            arrivalDate: "",
+            arrivalTime: "",
+            note: "",
+        },
+    });
+
+    const status = watch("status");
+    const isGoing = status === "going";
     const [guests, setGuests] = useState<RSVPEntry[]>([]);
+    const [snackOpen, setSnackOpen] = useState(false);
+    const RSVPS_COL = "rsvps";
 
-    const [openGoing, setOpenGoing] = useState(false);
-    const [openOther, setOpenOther] = useState<false | RSVPStatus>(false);
-
-    const {  user } = useAuth();
     // 🔄 Live subscribe to RSVPs
     useEffect(() => {
-
         const q = query(collection(db, RSVPS_COL), orderBy("createdAt", "asc"));
         const unsub = onSnapshot(q, (snap) => {
             const rows: RSVPEntry[] = [];
@@ -73,72 +91,26 @@ const RSVP: React.FC = () => {
         return () => unsub();
     }, []);
 
-    const ensureName = (): string | null => {
-        const trimmed = name.trim();
-        if (!trimmed) {
-            alert("Please enter your name first.");
-            return null;
-        }
-        return trimmed;
-    };
-
-    // Create/Update current user's RSVP (doc id == uid)
-    // const upsertMyRSVP = async (payload: Partial<RSVPEntry>) => {
-    //     if (!uid) { alert("Auth not ready. Try again."); return; }
-    //     await setDoc(
-    //         doc(db, "rsvps", uid),
-    //         {
-    //             userId: uid,
-    //             name: name.trim(),
-    //             createdAt: serverTimestamp(), // first time
-    //             updatedAt: serverTimestamp(), // updated each time
-    //             // fields from payload
-    //             ...payload,
-    //         },
-    //         { merge: true }
-    //     );
-    // };
-
-    // ➕ Add entries
-    const handleConfirmGoing = async (additionalGuests: number) => {
-        const trimmed = ensureName(); if (!trimmed) return;
-        await addDoc(collection(db, "rsvps"), {
-            name: trimmed,
-            status: "going",
-            additionalGuests: Number(additionalGuests || 0),
-            note: null,
-            createdAt: serverTimestamp(),
-        });
-        setOpenGoing(false);
-    };
-
-    const handleConfirmOther = async (note?: string) => {
-        const trimmed = ensureName(); if (!trimmed) return;
-        await addDoc(collection(db, "rsvps"), {
-            name: trimmed,
-            status: openOther === "not_going" ? "not_going" : "maybe",
-            additionalGuests: 0,
-            note: note?.trim() || null,
-            createdAt: serverTimestamp(),
-        });
-        setOpenOther(false);
-    };
-
-// Admin-only reset (callable recommended; client loop shown if you already used it)
-    const handleReset = async () => {
-        if (!user) return;
-        if (!confirm("Are you sure you want to clear all RSVPs?")) return;
-        const snap = await getDocs(collection(db, "rsvps"));
-        await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "rsvps", d.id))));
-    };
-
-    // Group & counts
-    const grouped = useMemo(() => {
-        const by: Record<RSVPStatus, RSVPEntry[]> = {
-            going: [],
-            not_going: [],
-            maybe: [],
+    const onSubmit: SubmitHandler<FormValues> = async (data) => {
+        const payload: Rsvp = {
+            name: data.name.trim(),
+            email: data.email?.trim(),
+            phone: data.phone?.trim(),
+            status: data.status,
+            additionalGuests: data.additionalGuests ?? 0,
+            arrivalAirport: isGoing ? data.arrivalAirport?.trim() : "",
+            arrivalDate: isGoing ? data.arrivalDate || "" : "",
+            arrivalTime: isGoing ? data.arrivalTime || "" : "",
+            note: !isGoing ? data.note?.trim() : "",
         };
+        await saveRsvp(payload);
+        setSnackOpen(true);     // ✅ show success toast
+        reset();
+    };
+
+    // Groups & counts
+    const grouped = useMemo(() => {
+        const by: Record<RSVPStatus, RSVPEntry[]> = { going: [], not_going: [], maybe: [] };
         for (const g of guests) by[g.status]?.push(g);
         return by;
     }, [guests]);
@@ -148,43 +120,176 @@ const RSVP: React.FC = () => {
         [grouped]
     );
 
-    const handleGoingClick = () => {
-        if (!ensureName()) return;
-        setOpenGoing(true);
-    };
-    const handleOtherClick = (status: Exclude<RSVPStatus, "going">) => {
-        if (!ensureName()) return;
-        setOpenOther(status);
-    };
+    // Small helper: clear adornment for fields
+    const ClearAdornment: React.FC<{ onClick: () => void; label: string }> = ({ onClick, label }) => (
+        <InputAdornment position="end">
+            <IconButton aria-label={`Clear ${label}`} size="small" onClick={onClick} edge="end">
+                <ClearIcon fontSize="small" />
+            </IconButton>
+        </InputAdornment>
+    );
 
     return (
         <Box className="page-container">
             <Box className="page-content">
-
-
-                {/* Name + Action buttons */}
-                <Card sx={{ mb: 3 }}>
+                <Card sx={{ backgroundColor: "rgba(255,255,255,0.9)" }}>
                     <CardContent>
                         <Typography variant="h4" gutterBottom>
                             RSVP 📝
                         </Typography>
-                        <TextField
-                            label="Your Name"
-                            fullWidth
-                            margin="normal"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                            <Button variant="contained" color="primary" onClick={handleGoingClick}>
-                                Going
-                            </Button>
-                            <Button variant="outlined" color="secondary" onClick={() => handleOtherClick("maybe")}>
-                                Maybe
-                            </Button>
-                            <Button variant="outlined" color="secondary" onClick={() => handleOtherClick("not_going")}>
-                                Not Going
-                            </Button>
+
+                        <Stack component="form" spacing={2} onSubmit={handleSubmit(onSubmit)}>
+                            {/* Name */}
+                            <Controller
+                                name="name"
+                                control={control}
+                                rules={{ required: "Name is required" }}
+                                render={({ field, fieldState }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Full Name"
+                                        required
+                                        error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}
+                                    />
+                                )}
+                            />
+
+                            {/* Email (optional) */}
+                            <Controller
+                                name="email"
+                                control={control}
+                                render={({ field }) => <TextField {...field} type="email" label="Email (optional)" />}
+                            />
+
+                            {/* Phone (optional) */}
+                            <Controller
+                                name="phone"
+                                control={control}
+                                render={({ field }) => <TextField {...field} type="tel" label="Phone (optional)" />}
+                            />
+
+                            {/* Status */}
+                            <Controller
+                                name="status"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField {...field} select label="Attendance">
+                                        <MenuItem value="going">Going</MenuItem>
+                                        <MenuItem value="not_going">Not Going</MenuItem>
+                                        <MenuItem value="maybe">Maybe</MenuItem>
+                                    </TextField>
+                                )}
+                            />
+
+                            {/* Additional guests */}
+                            <Controller
+                                name="additionalGuests"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField {...field} select label="Additional guests">
+                                        <MenuItem value={0}>No additional guests</MenuItem>
+                                        {additionalGuestOptions.map((n) => (
+                                            <MenuItem key={n} value={n}>
+                                                {`+${n} guest${n > 1 ? "s" : ""}`}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
+                            />
+
+                            {/* Arrival info (Going only) */}
+                            {isGoing && (
+                                <>
+                                    <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                                        Arrival details (optional)
+                                    </Typography>
+
+                                    {/* Airport (clearable) */}
+                                    <Controller
+                                        name="arrivalAirport"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Arrival airport (e.g., ORD, MDW)"
+                                                placeholder="Airport code or name"
+                                                InputProps={{
+                                                    endAdornment: field.value ? (
+                                                        <ClearAdornment
+                                                            label="arrival airport"
+                                                            onClick={() => setValue("arrivalAirport", "")}
+                                                        />
+                                                    ) : undefined,
+                                                }}
+                                            />
+                                        )}
+                                    />
+
+                                    {/* Date + Time (both clearable) */}
+                                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                                        <Controller
+                                            name="arrivalDate"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <TextField
+                                                    {...field}
+                                                    type="date"
+                                                    label="Arrival date"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    fullWidth
+                                                    InputProps={{
+                                                        endAdornment: field.value ? (
+                                                            <ClearAdornment
+                                                                label="arrival date"
+                                                                onClick={() => setValue("arrivalDate", "")}
+                                                            />
+                                                        ) : undefined,
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                        <Controller
+                                            name="arrivalTime"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <TextField
+                                                    {...field}
+                                                    type="time"
+                                                    label="Arrival time"
+                                                    InputLabelProps={{ shrink: true }}
+                                                    fullWidth
+                                                    InputProps={{
+                                                        endAdornment: field.value ? (
+                                                            <ClearAdornment
+                                                                label="arrival time"
+                                                                onClick={() => setValue("arrivalTime", "")}
+                                                            />
+                                                        ) : undefined,
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </Stack>
+                                </>
+                            )}
+
+                            {/* Note for Not Going / Maybe */}
+                            {!isGoing && (
+                                <Controller
+                                    name="note"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField {...field} label="Note (optional)" multiline minRows={2} />
+                                    )}
+                                />
+                            )}
+
+                            <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 1 }}>
+                                <Button type="submit" variant="contained" color="primary">
+                                    Submit RSVP
+                                </Button>
+                            </Stack>
                         </Stack>
                     </CardContent>
                 </Card>
@@ -233,10 +338,7 @@ const RSVP: React.FC = () => {
                             <List>
                                 {grouped.maybe.map((g) => (
                                     <ListItemButton key={g.id} divider>
-                                        <ListItemText
-                                            primary={g.name}
-                                            secondary={g.note ? `Note: ${g.note}` : undefined}
-                                        />
+                                        <ListItemText primary={g.name} secondary={g.note ? `Note: ${g.note}` : undefined} />
                                     </ListItemButton>
                                 ))}
                             </List>
@@ -256,40 +358,32 @@ const RSVP: React.FC = () => {
                             <List>
                                 {grouped.not_going.map((g) => (
                                     <ListItemButton key={g.id} divider>
-                                        <ListItemText
-                                            primary={g.name}
-                                            secondary={g.note ? `Note: ${g.note}` : undefined}
-                                        />
+                                        <ListItemText primary={g.name} secondary={g.note ? `Note: ${g.note}` : undefined} />
                                     </ListItemButton>
                                 ))}
                             </List>
                         )}
                     </CardContent>
                 </Card>
-
-                {/* Admin reset */}
-                {user && (
-                    <>
-                        <Divider sx={{ my: 2 }} />
-                        <Button variant="contained" color="error" onClick={handleReset}>
-                            🚨 Reset All RSVPs
-                        </Button>
-                    </>
-                )}
-
-                {/* Modals */}
-                <GoingModal
-                    open={openGoing}
-                    onClose={() => setOpenGoing(false)}
-                    onConfirm={handleConfirmGoing}
-                />
-                <NoteModal
-                    open={!!openOther}
-                    onClose={() => setOpenOther(false)}
-                    onConfirm={handleConfirmOther}
-                    title={openOther === "not_going" ? "Not Going" : "Maybe"}
-                />
             </Box>
+
+            {/* ✅ Success Snackbar */}
+            <Snackbar
+                open={snackOpen}
+                autoHideDuration={4000}
+                onClose={() => setSnackOpen(false)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    elevation={3}
+                    onClose={() => setSnackOpen(false)}
+                    severity="success"
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    Thanks! Your RSVP has been saved.
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

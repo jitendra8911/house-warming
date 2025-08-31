@@ -50,6 +50,12 @@
     }
   }
 
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
   /* Tighten spacing on small screens */
   @media (max-width: 600px) {
     .header-toolbar {
@@ -59,6 +65,7 @@
     }
     .mobile-hamburger {
       margin-right: 4px !important;
+      animation: pulse 1.5s ease-in-out 2;
     }
   }
 }

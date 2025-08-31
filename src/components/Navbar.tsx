@@ -1,7 +1,7 @@
 import React from "react";
 import {
     Drawer,
-    List,
+    List, ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
@@ -12,9 +12,11 @@ import HomeIcon from "@mui/icons-material/Home";
 import EventIcon from "@mui/icons-material/Event";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import MapIcon from "@mui/icons-material/Map";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate} from "react-router-dom";
 import navbarTheme  from "../theme/theme";
 import "../styles/components/navbar.scss";
+import {useAuth} from "../auth/AuthContext.tsx";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 interface NavbarProps {
     mobileOpen: boolean;
@@ -28,6 +30,7 @@ const Navbar: React.FC<NavbarProps> = ({ mobileOpen, onMobileClose }) => {
     const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
     const location = useLocation();
     const navigate = useNavigate();
+    const {isAdmin} = useAuth();
 
     const navItems = [
         { text: "Home", path: "/", icon: <HomeIcon />, exact: true },
@@ -47,6 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ mobileOpen, onMobileClose }) => {
     const drawerContent = (
         <List>
             {navItems.map(({ text, path, icon, exact }) => (
+                <ListItem disablePadding>
                 <ListItemButton
                     key={text}
                     className="nav-link"
@@ -56,7 +60,21 @@ const Navbar: React.FC<NavbarProps> = ({ mobileOpen, onMobileClose }) => {
                     <ListItemIcon className="nav-icon">{icon}</ListItemIcon>
                     <ListItemText primary={text} />
                 </ListItemButton>
+                </ListItem>
             ))}
+            {isAdmin && (
+                <ListItem disablePadding>
+                    <ListItemButton
+                        key={"Admin"}
+                        className="nav-link"
+                        selected={isActive("/admin", true)}
+                        onClick={() => handleNav("/admin")}
+                    >
+                        <ListItemIcon className="nav-icon"><AdminPanelSettingsIcon/></ListItemIcon>
+                        <ListItemText primary={"Admin"} />
+                    </ListItemButton>
+                </ListItem>
+            )}
         </List>
     );
 

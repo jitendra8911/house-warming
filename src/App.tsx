@@ -9,6 +9,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import "./styles/app.scss";
 import AdminControls from "./components/AdminControls.tsx";
+import AdminPage from "./pages/AdminPage.tsx";
 
 const App: React.FC = () => {
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -30,6 +31,7 @@ const App: React.FC = () => {
                     <Route path="/rsvp" element={<RSVP />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/map" element={<MapPage />} />
+                    <Route path="/admin" element={<AdminPage />} />   {/* new */}
                 </Routes>
 
                 <Footer />

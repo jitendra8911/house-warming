@@ -59,12 +59,13 @@ const Header: React.FC<HeaderProps> = ({ onHamburgerClick }) => {
                             className="mobile-hamburger"
                             edge="start"
                             sx={{
-                                mr: 1,
-                                color: "#ffffff",               // force white
-                                bgcolor: "primary.main",        // background circle in theme color
-                                "&:hover": {
-                                    bgcolor: "primary.dark",
-                                },
+                                bgcolor: "primary.main",
+                                color: "#fff",
+                                "&:hover": { bgcolor: "primary.dark" },
+                                borderRadius: "50%",
+                                p: 1.2, // bigger touch target
+                                boxShadow: 2,
+
                             }}
                         >
                             <MenuIcon />
