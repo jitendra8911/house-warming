@@ -16,6 +16,8 @@ import {
     Alert,
     IconButton,
     InputAdornment,
+    Dialog, DialogTitle, DialogContent, DialogContentText,
+    DialogActions
 } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
@@ -69,6 +71,8 @@ const RSVP: React.FC = () => {
     const [guests, setGuests] = useState<RSVPEntry[]>([]);
     const [snackOpen, setSnackOpen] = useState(false);
     const RSVPS_COL = "rsvps";
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [pendingData, setPendingData] = useState<FormValues | null>(null);
 
     // 🔄 Live subscribe to RSVPs
     useEffect(() => {
@@ -91,21 +95,52 @@ const RSVP: React.FC = () => {
         return () => unsub();
     }, []);
 
-    const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    // Gate form submission so only the explicit submit button can submit
+    const onFormSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+        const submitter = (e.nativeEvent as SubmitEvent & { submitter?: HTMLElement }).submitter;
+        const isWhitelisted =
+            !!submitter && typeof submitter.matches === "function" && submitter.matches('[data-submit="true"]');
+
+        if (!isWhitelisted) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        // If allowed, delegate to RHF
+        handleSubmit(onSubmit)(e);
+    };
+
+    const onSubmit: SubmitHandler<FormValues> = (data) => {
+        setPendingData(data);
+        setConfirmOpen(true);   // open confirmation dialog
+    };
+
+    const handleConfirm = async () => {
+        if (!pendingData) return;
+        const isGoing = pendingData.status === "going";
+
         const payload: Rsvp = {
-            name: data.name.trim(),
-            email: data.email?.trim(),
-            phone: data.phone?.trim(),
-            status: data.status,
-            additionalGuests: data.additionalGuests ?? 0,
-            arrivalAirport: isGoing ? data.arrivalAirport?.trim() : "",
-            arrivalDate: isGoing ? data.arrivalDate || "" : "",
-            arrivalTime: isGoing ? data.arrivalTime || "" : "",
-            note: !isGoing ? data.note?.trim() : "",
+            name: pendingData.name.trim(),
+            email: pendingData.email?.trim(),
+            phone: pendingData.phone?.trim(),
+            status: pendingData.status,
+            additionalGuests: pendingData.additionalGuests ?? 0,
+            arrivalAirport: isGoing ? pendingData.arrivalAirport?.trim() : "",
+            arrivalDate: isGoing ? pendingData.arrivalDate || "" : "",
+            arrivalTime: isGoing ? pendingData.arrivalTime || "" : "",
+            note: !isGoing ? pendingData.note?.trim() : "",
         };
+
         await saveRsvp(payload);
-        setSnackOpen(true);     // ✅ show success toast
-        reset();
+        setSnackOpen(true);
+        reset();                // clear form after submit
+        setConfirmOpen(false);  // close dialog
+    };
+
+    const handleCancel = () => {
+        setConfirmOpen(false);
+        setPendingData(null);
     };
 
     // Groups & counts
@@ -123,7 +158,7 @@ const RSVP: React.FC = () => {
     // Small helper: clear adornment for fields
     const ClearAdornment: React.FC<{ onClick: () => void; label: string }> = ({ onClick, label }) => (
         <InputAdornment position="end">
-            <IconButton aria-label={`Clear ${label}`} size="small" onClick={onClick} edge="end">
+            <IconButton aria-label={`Clear ${label}`} size="small" onClick={onClick} edge="end" type="button">
                 <ClearIcon fontSize="small" />
             </IconButton>
         </InputAdornment>
@@ -138,8 +173,30 @@ const RSVP: React.FC = () => {
                             RSVP 📝
                         </Typography>
 
-                        <Stack component="form" spacing={2} onSubmit={handleSubmit(onSubmit)}>
-                            {/* Name */}
+                        <Stack
+                            component="form"
+                            spacing={2}
+                            onSubmit={onFormSubmit}     // ⬅️ use the gate
+                            noValidate
+                            onKeyDown={(e) => {
+                                const target = e.target as HTMLElement;
+                                const tag = target.tagName;
+                                const role = target.getAttribute("role");
+                                const isEnter = e.key === "Enter" || e.code === "Enter" || e.key === "NumpadEnter";
+
+                                // Allow newline in textarea and Enter inside combobox/selects
+                                const allow =
+                                    tag === "TEXTAREA" ||
+                                    tag === "SELECT" ||
+                                    role === "combobox"; // MUI TextField select renders with combobox
+
+                                if (isEnter && !allow) {
+                                    e.preventDefault();
+                                }
+                            }}
+                        >
+
+                        {/* Name */}
                             <Controller
                                 name="name"
                                 control={control}
@@ -151,6 +208,7 @@ const RSVP: React.FC = () => {
                                         required
                                         error={!!fieldState.error}
                                         helperText={fieldState.error?.message}
+                                        inputProps={{enterKeyHint: "next"}}
                                     />
                                 )}
                             />
@@ -159,14 +217,14 @@ const RSVP: React.FC = () => {
                             <Controller
                                 name="email"
                                 control={control}
-                                render={({ field }) => <TextField {...field} type="email" label="Email (optional)" />}
+                                render={({ field }) => <TextField {...field} type="email" label="Email (optional)" inputProps={{enterKeyHint: "next"}} />}
                             />
 
                             {/* Phone (optional) */}
                             <Controller
                                 name="phone"
                                 control={control}
-                                render={({ field }) => <TextField {...field} type="tel" label="Phone (optional)" />}
+                                render={({ field }) => <TextField {...field} type="tel" label="Phone (optional)" inputProps={{enterKeyHint: "next"}}/>}
                             />
 
                             {/* Status */}
@@ -286,7 +344,7 @@ const RSVP: React.FC = () => {
                             )}
 
                             <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 1 }}>
-                                <Button type="submit" variant="contained" color="primary">
+                                <Button type="submit" variant="contained" color="primary" data-submit="true">
                                     Submit RSVP
                                 </Button>
                             </Stack>
@@ -384,7 +442,41 @@ const RSVP: React.FC = () => {
                     Thanks! Your RSVP has been saved.
                 </Alert>
             </Snackbar>
+
+            <Dialog open={confirmOpen} onClose={handleCancel}>
+                <DialogTitle>Confirm RSVP</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Please confirm your RSVP submission.
+                        <br />
+                        <strong>Name:</strong> {pendingData?.name} <br />
+                        <strong>Status:</strong> {pendingData?.status} <br />
+                        {pendingData?.status === "going" && (
+                            <>
+                                <strong>Guests:</strong> +{pendingData?.additionalGuests} <br />
+                                {pendingData?.arrivalAirport && (
+                                    <>
+                                        <strong>Arrival airport:</strong> {pendingData.arrivalAirport} <br />
+                                        <strong>Arrival date:</strong> {pendingData.arrivalDate || "—"} <br />
+                                        <strong>Arrival time:</strong> {pendingData.arrivalTime || "—"} <br />
+                                    </>
+                                )}
+                            </>
+                        )}
+                        {pendingData?.note && (
+                            <>
+                                <strong>Note:</strong> {pendingData.note}
+                            </>
+                        )}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancel} color="secondary">Cancel</Button>
+                    <Button onClick={handleConfirm} variant="contained" color="primary">Confirm</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
+
     );
 };
 

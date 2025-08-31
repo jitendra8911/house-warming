@@ -40,14 +40,14 @@ const Home: React.FC = () => {
                         </Button>
 
                         {/* Invitation heading */}
-                        <Typography variant="h4" gutterBottom>
+                        <Typography variant="h4" gutterBottom fontWeight="bold">
                             You’re Invited!
                         </Typography>
 
-                        <Typography variant="body1" sx={{ mt: 2 }}>
-                            Join us in celebrating our new home and making it special with
-                            your presence.
+                        <Typography variant="body1" sx={{ mt: 2, fontWeight: 300 }}>
+                            Join us as we celebrate the joy of our new home and make it truly special with your presence.
                         </Typography>
+
 
                         <img
                             src={invitation}
@@ -60,6 +60,43 @@ const Home: React.FC = () => {
                             }}
                             onClick={() => setOpenInvitation(true)}
                         />
+
+                        <Box sx={{ mt: 3 }}>
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }}>
+                                <strong>📅 Date:</strong>{" "}
+                                <Typography component="span" fontWeight={300}>
+                                    Saturday, September 27th, 2025
+                                </Typography>
+                            </Typography>
+
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }}>
+                                <strong>🕗 Gruha Pravesam:</strong>{" "}
+                                <Typography component="span" fontWeight={300}>
+                                    8:50 AM
+                                </Typography>
+                            </Typography>
+
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }}>
+                                <strong>🙏 Satyanarayana Swami Vratham:</strong>{" "}
+                                <Typography component="span" fontWeight={300}>
+                                    11:00 AM
+                                </Typography>
+                            </Typography>
+
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }}>
+                                <strong>🍴 Lunch:</strong>{" "}
+                                <Typography component="span" fontWeight={300}>
+                                    12:30 PM onwards
+                                </Typography>
+                            </Typography>
+
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }}>
+                                <strong>📍 Address:</strong>{" "}
+                                <Typography component="span" fontWeight={300}>
+                                    2936 Red Rose Road, Aurora, IL, 60503
+                                </Typography>
+                            </Typography>
+                        </Box>
 
                         <Dialog open={openInvitation}
                             onClose={() => setOpenInvitation(false)}
