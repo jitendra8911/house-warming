@@ -98,7 +98,7 @@ const Home: React.FC = () => {
                             </Typography>
 
                             <Typography variant="subtitle1" sx={{ mt: 1.5 }} >
-                                <Typography component="span" fontWeight={300}>
+                                <Typography component="span" fontWeight={300} sx={{color: "#b26a00"  }}>
                                     ❄️ Please bring jackets — the weather tends to get chilly around this time!
                                 </Typography>
                             </Typography>
