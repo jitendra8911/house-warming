@@ -96,6 +96,12 @@ const Home: React.FC = () => {
                                     2936 Red Rose Road, Aurora, IL, 60503
                                 </Typography>
                             </Typography>
+
+                            <Typography variant="subtitle1" sx={{ mt: 1.5 }} >
+                                <Typography component="span" fontWeight={300}>
+                                    ❄️ Please bring jackets — the weather tends to get chilly around this time!
+                                </Typography>
+                            </Typography>
                         </Box>
 
                         <Dialog open={openInvitation}
